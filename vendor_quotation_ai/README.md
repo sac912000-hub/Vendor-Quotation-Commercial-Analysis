@@ -31,19 +31,25 @@ Requires Python 3.10 or newer.
    ```
 3. Press `Ctrl+Shift+P` → **Python: Select Interpreter** → choose the `.venv` one.
 
-## 2. Run
+## 2. Run locally
 
 ```
-streamlit run app.py
+uvicorn app:app --reload
 ```
-The dashboard opens in your browser. It loads the sample file automatically; upload your own in the sidebar.
-You can also press **F5** in VS Code and pick *Dashboard (Streamlit)*.
+Open the displayed local URL. Load the sample workbook from the sidebar or upload your own.
+The original Streamlit interface remains available with `streamlit run streamlit_app.py`.
 
 No browser? `python cli.py data/Vendor_Quotation_Comparison.xlsx` prints the conclusion and writes an Excel report.
 
 Self-check: `python tests/test_engine.py`
 
-## 3. Turn on Claude (optional)
+## 3. Deploy on Vercel
+
+Import this project into Vercel and set the project root to the directory containing `app.py` and `requirements.txt`. Vercel serves the FastAPI application exported as `app` from `app.py`. The optional Claude integration can use an API key entered in the dashboard or `ANTHROPIC_API_KEY` from the deployment environment.
+
+The workbook upload limit is 3 MB. Uploaded files and AI keys are not written to persistent storage by this app.
+
+## 4. Turn on Claude (optional)
 
 1. Create an API key at https://console.anthropic.com
 2. Copy `.env.example` to `.env` and paste the key (or paste it in the sidebar → *Claude (AI)*).
@@ -53,7 +59,7 @@ Self-check: `python tests/test_engine.py`
 Design rule: Python computes every number; Claude only explains them from a compact JSON of results,
 and is told not to invent figures. Without a key, every other feature still works.
 
-## 4. How the comparison works
+## 5. How the comparison works
 
 | Step | What happens |
 |---|---|
@@ -63,7 +69,7 @@ and is told not to invent figures. Without a key, every other feature still work
 | Scoring | Price = item-wise L1 total ÷ vendor total on the same items. Delivery = fastest ÷ vendor. Payment = 100 − advance % (halved if ABG-backed, −20 if no bank protection). Warranty = months ÷ longest. Weights are sidebar sliders. |
 | Partial quotes | Scored on the items they quoted, but never ranked as full-scope winners (e.g. BHEL, 4 of 10 items). |
 
-## 5. Things you must review (assumptions)
+## 6. Things you must review (assumptions)
 
 * **Landed-cost percentages are placeholders** (`vqc/config.py`, or the sidebar). Replace with your logistics/customs numbers before relying on the Landed or TCO basis.
 * Domestic prices are assumed GST-exclusive and GST is treated as recoverable.
@@ -71,14 +77,15 @@ and is told not to invent figures. Without a key, every other feature still work
 * "Warranty" uses the longest clock in "18/24 months" (assumed dispatch-based).
 * Supervision/commissioning charges are flagged, not priced, because mandays are not specified.
 
-## 6. Using your own workbooks
+## 7. Using your own workbooks
 
 Keep the same layout as the sample: items down the rows; vendor name in a header row with one column per round; a currency row under the header; terms rows below the `Total` row. Different layout? Only `vqc/loader.py` needs adapting.
 
-## 7. Project map
+## 8. Project map
 
 ```
-app.py            Streamlit dashboard (8 tabs)
+app.py            FastAPI web dashboard for Vercel
+streamlit_app.py  Original Streamlit dashboard
 cli.py            Command-line report
 vqc/loader.py     Excel -> tidy tables
 vqc/terms.py      Free-text terms -> numbers

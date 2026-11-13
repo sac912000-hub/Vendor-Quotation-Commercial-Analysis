@@ -1,8 +1,10 @@
 """Run with:  python -m pytest -q   (pip install pytest)  or just  python tests/test_engine.py"""
+import base64
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app import _calculate, _dashboard_payload, app
 from vqc import terms
 from vqc.analysis import run_analysis
 from vqc.loader import load_quotation
@@ -30,6 +32,20 @@ def test_sheet_totals_match_recomputed():
 def test_l1_audit_finds_items_5_and_9():
     res = run_analysis(load_quotation(SAMPLE), basis="quoted")
     assert list(res.audit.loc[~res.audit.ok, "item_no"]) == [5, 9]
+
+
+def test_web_dashboard_payload_uses_existing_engine():
+    assert callable(app)
+    payload = {
+        "workbook": base64.b64encode(SAMPLE.read_bytes()).decode("ascii"),
+        "settings": {},
+    }
+    quotation, result, vendors = _calculate(payload)
+    dashboard = _dashboard_payload(quotation, result, vendors)
+    assert dashboard["recommended"] == result.recommended
+    assert len(dashboard["price_table"]) == len(quotation.items)
+    assert dashboard["figures"]["total_cost"] is not None
+    assert set(dashboard["active"]) == set(result.active)
 
 
 if __name__ == "__main__":
