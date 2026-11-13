@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+.env
+*.pyc
+Vendor_Comparison_Report.xlsx
